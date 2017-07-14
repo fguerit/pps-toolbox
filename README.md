@@ -1,4 +1,4 @@
-# **pps** Toolbox for CI direct stimulation#
+# **pps** Toolbox for CI direct stimulation #
 **p**layer.**p**lay(**s**timulus)
 
 This toolbox is meant to assist the design of cross-devices direct stimulation experiments in Matlab.

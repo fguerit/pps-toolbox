@@ -6,19 +6,19 @@ This toolbox is meant to assist the design of cross-devices direct stimulation e
 It is composed of:
 
 1. Scripts to play sound uniformly across CI platforms: `player.play(stimulus)`.
-Scripts are object-oriented, based on three Matlab super classes, `Player`, `Medium` and `Stimulus`.
-1. A fitting interface `loudness_evaluation.m`.
+Scripts are object-oriented, based on three Matlab super classes, `Player`, `Format` and `Stimulus`.
 1. Demos.
 
 
 ## How do I get set up? ##
 
-No public release is available yet. It is planned for early September 2017 on this GitHub repository.
+* run `ppsToolboxStartup`.
+* check the demos in the `demos` folder.
 
 ## Where can I get help? ##
 
-There is a `demos` folder inside the repository.
-Further help is also available on the GitHub [wiki](https://github.com/fguerit/pps-toolbox/wiki).
+There is a `demos` folder inside the repository. You are also welcome to ask questions
+on the [issue tracking page](https://github.com/fguerit/pps-toolbox/issues).
 
 ## Changelog ##
 

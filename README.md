@@ -9,11 +9,20 @@ It is composed of:
 Scripts are object-oriented, based on three Matlab super classes, `Player`, `Format` and `Stimulus`.
 1. Demos.
 
+Note that this toolbox has not yet passed its version `1.0.0`, meaning that a few features are missing, and/or might change significantly.
+If you notice any issue, or want to suggest a feature, just report it [here](https://github.com/fguerit/pps-toolbox/issues).
+
+## Requirements ##
+
+* Research software from the different CI companies (hence having signed an agreement with them),
+* Matlab (tested with Matlab 2014a, 2015b, 2016a),
+* Python 2.7 for use with NIC3.
 
 ## How do I get set up? ##
 
-* run `ppsToolboxStartup`.
-* check the demos in the `demos` folder.
+* Download the [latest release](https://github.com/fguerit/pps-toolbox/releases/latest),
+* Run `ppsToolboxStartup`,
+* Check the demos in the `demos` folder.
 
 ## Where can I get help? ##
 

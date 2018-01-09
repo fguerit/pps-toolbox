@@ -7,3 +7,4 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Add a changelog.
 - Add a readme.
 - Add source files from previous bitbucket repository
+- Add demos from previous bitbucket repository

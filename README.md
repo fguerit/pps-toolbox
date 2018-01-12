@@ -33,6 +33,12 @@ on the [issue tracking page](https://github.com/fguerit/pps-toolbox/issues).
 
 Changes can be tracked in the [changelog.md](changelog.md) file.
 
+## Citing the toolbox ##
+
+There is no requirement to cite this toolbox for using it (cf, [license](license)). If you want to do so, please use the following DOI:
+
+Guérit, François, (2018). PPS Toolbox. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1143689.svg)](https://doi.org/10.5281/zenodo.1143659)
+
 ## Acknowledgements ##
 
 Thanks to Alexandre Chabot-Leclerc for early discussions on the object-oriented design.

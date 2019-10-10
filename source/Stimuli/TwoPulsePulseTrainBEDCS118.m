@@ -148,7 +148,42 @@ classdef TwoPulsePulseTrainBEDCS118 < FormatBEDCS118 & PulseTrain
         end           
     end
     
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            if isstruct(s)
+                newObj = TwoPulsePulseTrainBEDCS118();
+                newObj.phase_dur_us = s.phase_dur_us;
+                newObj.interphase_dur_us = s.interphase_dur_us;
+                newObj.electrode_IDs = s.electrode_IDs;
+                newObj.rate_pps = s.rate_pps;
+                newObj.level = s.level;
+                newObj.duration_s = s.duration_s;
+                newObj.ratio_asymmetry = s.ratio_asymmetry;
+                newObj.polarity = s.polarity;
+                newObj.max_level = s.max_level;
+                newObj.gap_us = s.gap_us;
+                obj = newObj;
+            else
+                obj = s;
+            end
+        end
+    end
+    
     methods (Hidden)
+        
+        function s = saveobj(obj)
+            s.phase_dur_us = obj.phase_dur_us;
+            s.interphase_dur_us = obj.interphase_dur_us;
+            s.electrode_IDs = obj.electrode_IDs;
+            s.rate_pps = obj.rate_pps;
+            s.level = obj.level;
+            s.duration_s = obj.duration_s;
+            s.ratio_asymmetry = obj.ratio_asymmetry;
+            s.polarity = obj.polarity;
+            s.max_level = obj.max_level;
+            s.gap_us = obj.gap_us;
+        end
+        
         function init(obj)
             % obj.init() prepares the "variables_struct" to be sent to
             % BEDCS

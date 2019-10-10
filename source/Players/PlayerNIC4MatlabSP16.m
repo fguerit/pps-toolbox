@@ -1,54 +1,53 @@
-classdef PlayerNIC3MatlabL34 < PlayerNIC3
-    % PlayerNIC3MatlabL34 < PlayerNIC3
+classdef PlayerNIC4MatlabSP16 < PlayerNIC4
+    % PlayerNIC4MatlabSP16 < PlayerNIC4
     %   
-    %   Class that defines the PlayerNIC3MatlabL34 object.
+    %   Class that defines the PlayerNIC4MatlabSP16 object.
 	%
-	%	It uses the Matlab interface with nic3 (the streaming .bat file should therefore 
+	%	It uses the Matlab interface with nic4 (the streaming .bat file should therefore 
 	%	be started before calling this script).
     %
-    %   PlayerNIC3MatlabL34 Properties:
+    %   PlayerNIC4MatlabSP16 Properties:
     %       stimulus_format - Format that can be read by the player
-    %       is_blocking - 0 here: PlayerNIC3MatlabL34 doesn't block the matlab prompt when playing      
-    %       nic3javapath - nic3 settings
-    %       platform - nic3 settings
-    %       auto_pufs - nic3 settings
+    %       is_blocking - 0 here: PlayerNIC4MatlabSP16 doesn't block the matlab prompt when playing      
+    %       nic4javapath - nic4 settings
+    %       platform - nic4 settings
+    %       auto_pufs - nic4 settings
     %       implant - CIC3 or CIC4
-    %       mode - nic3 settings
-    %       flagged_electrodes - nic3 settings
-    %       min_pulse_width_us - nic3 settings
-    %       latency_ms - nic3 settings
-    %       go_live - nic3 settings
+    %       mode - nic4 settings
+    %       flagged_electrodes - nic4 settings
+    %       min_pulse_width_us - nic4 settings
+    %       latency_ms - nic4 settings
+    %       go_live - nic4 settings
     %
-    %   PlayerNIC3MatlabL34 Methods:
+    %   PlayerNIC4MatlabSP16 Methods:
     %       play(obj, stimObj) - obj.play(stimObj) plays the stimulus
     %
     %   Example:
-    %       p = PlayerNIC3MatlabL34(); % Laura speech processor
-    %       stim = PulseTrainNIC3Matlab();
+    %       p = PlayerNIC4MatlabSP16(); % Laura speech processor
+    %       stim = PulseTrainNIC4Matlab();
     %       p.play(stim)    
     %
-    %   See also PLAYER, FORMAT, BLEEP, PULSETRAINNIC3MATLAB       
+    %   See also PLAYER, FORMAT, BLEEP, PULSETRAINNIC4MATLAB       
     
     properties
         implant = 'CIC4';        
+        go_live = 'on';        
     end
     
     % These properties can't be modified by the user, to avoid false manipulation
     properties (SetAccess = protected)
-        stimulus_format = @FormatNIC3Matlab;
-        is_blocking = 0; % PlayerNIC3MatlabL34 doesn't block the matlab prompt when playing 
-        nic3javapath = 'C:\nucleus\nic3\binaries\LLCstreamClient.jar';
-        platform = 'L34';
+        stimulus_format = @FormatNIC4Matlab;
+        is_blocking = 0; % PlayerNIC4MatlabSP16 doesn't block the matlab prompt when playing 
+        nic4javapath = 'C:\nucleus\nic4\binaries\nic4.jar';
+        platform = 'SP16';
         auto_pufs = 'on';
         mode = 'MP1+2';
-        flagged_electrodes = '22';
-        min_pulse_width_us = '20.0';
+        flagged_electrodes = '';
+        min_pulse_width_us = '25.0';
         latency_ms = '100';
-	end
-	
-	% This cannot be changed in the current release (use python interface if needed)
-	properties
-        go_live = 'on';
+        c_levels = ['255 255 255 255 255 255 255 255 255 255 255 255 255 '...
+            '255 255 255 255 255 255 255 255 255'];
+        c_levels_pulse_width_us = '40.0';        
     end
     
     % Handle to the java client
@@ -57,7 +56,7 @@ classdef PlayerNIC3MatlabL34 < PlayerNIC3
     end
     
     methods
-        function obj = PlayerNIC3MatlabL34()
+        function obj = PlayerNIC4MatlabSP16()
             % Constructor, inits the java client at startup
             
             obj.init();
@@ -79,21 +78,20 @@ classdef PlayerNIC3MatlabL34 < PlayerNIC3
                 'phase_widths', stimObj.phase_widths, ...
                 'phase_gaps', stimObj.phase_gaps, ...
                 'periods', stimObj.periods);
-            STIM = struct2map(full_stim);
+            STIM = cochlear.nic.nic4.struct2map(full_stim);
             
             % Stream stimulus and update stream status
-            stream_status = obj.client.sendData(STIM, true);
-            old_stream_status = obj.client.STREAMER_STATUS_NIL;
+            obj.client.sendData(STIM);
         end
         
         function delete(obj)
-            obj.client.stopStream()
+            obj.client.stop()
             obj.client.close();
-            disp('LLCstreamer has finished.')
+            disp('Streaming ended.')
         end
 		
-		function set.go_live(~,~)
-            error('This can not be changed in the current release of the pps Toolbox')
+		function set.go_live(~, ~)
+            error('go_live forced to be "on" because "off" creates at the moment a text file increasing very rapidly in size.')
         end 
         
         function set.implant(obj, value)
@@ -123,7 +121,7 @@ classdef PlayerNIC3MatlabL34 < PlayerNIC3
         function obj = loadobj(s)
             % Loads object from structure
             if isstruct(s)
-                newObj = PlayerNIC3MatlabL34();
+                newObj = PlayerNIC4MatlabSP16();
                 newObj.implant = s.implant;
                 obj = newObj;
             else
@@ -146,10 +144,12 @@ classdef PlayerNIC3MatlabL34 < PlayerNIC3
         function init(obj)
             
             % Add java path - needs to happen before global matlab variables are set
-            javaaddpath(obj.nic3javapath);
+            if sum(cellfun(@(c) numel(strfind(c, 'nic4.jar')), javaclasspath)) == 0
+                javaaddpath(obj.nic4javapath)
+            end
             
             % Set properties
-            properties = java.util.Hashtable;
+            properties = java.util.HashMap;
             properties.put('platform', obj.platform);
             properties.put('auto_pufs', obj.auto_pufs);
             properties.put('implant', obj.implant);
@@ -158,14 +158,15 @@ classdef PlayerNIC3MatlabL34 < PlayerNIC3
             properties.put('min_pulse_width_us', obj.min_pulse_width_us);
             properties.put('latency_ms', obj.latency_ms);
             properties.put('go_live', obj.go_live);
+            properties.put('c_levels_pulse_width_us', obj.c_levels_pulse_width_us);
+            properties.put('c_levels', obj.c_levels);
+            properties.put('verbose', 'on');
             
             % Connect to port 5555
-            obj.client = com.cochlear.nic3.StreamerClient(5555);   % connect to port 5555 on the same machine
+            obj.client = com.cochlear.nic.nic4.Streamer(properties, 5555);   % connect to port 5555 on the same machine
             
             % Start streaming (auto_pufs)
-            obj.client.open();
-            obj.client.init(properties);
-            obj.client.startStream();
+            obj.client.start();
             
         end       
     end      

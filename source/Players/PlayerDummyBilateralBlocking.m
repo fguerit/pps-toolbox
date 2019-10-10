@@ -25,21 +25,12 @@ classdef PlayerDummyBilateralBlocking < Player
         is_blocking = 1; % PlayerDummyBilateralBlocking blocks the matlab prompt when playing
     end
     
-    properties (Hidden, Access = protected)
-        h = []; % Handle to the BEDCS sever
-    end
-    
     methods
         function obj = PlayerDummyBilateralBlocking()
             % constructor. Inits the server at startup
             
         end
         
-        function init(obj)
-            % Inits the server
-            
-            
-        end
         
         function play(obj, stimObj_left, stimObj_right)
             % PLAY plays the stimulus. Since it's a dummy player, it just
@@ -91,5 +82,35 @@ classdef PlayerDummyBilateralBlocking < Player
             
         end
     end
+    
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % Loads object from structure
+            if isstruct(s)
+                obj = PlayerDummyBilateralBlocking();
+            else
+                obj = s;
+            end
+        end
+    end
+    
+    methods (Hidden)
+        
+        function s = saveobj(obj)
+            % Saves object to structure
+            % 
+            % This avoids saving the link to the activeX server, as this
+            % would likely crash when reloading the object from a mat-file.
+            
+            % Here there's no user-modifiable properties, so empty
+            % structure
+            s = struct;
+        end
+        
+        function init(obj)
+
+            
+        end        
+    end    
     
 end

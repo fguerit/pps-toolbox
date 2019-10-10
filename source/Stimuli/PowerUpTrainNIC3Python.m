@@ -108,7 +108,30 @@ classdef PowerUpTrainNIC3Python < FormatNIC3Python & PulseTrain
         end         
     end
     
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.
+            if isstruct(s)
+                newObj = PowerUpTrainNIC3Python();
+                newObj.duration_s = s.duration_s;
+                obj = newObj;
+            else
+                obj = s;
+            end
+        end
+    end    
+    
     methods (Hidden)
+        
+        function s = saveobj(obj)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.            
+            s.duration_s = obj.duration_s;
+        end
+        
         function init(obj)
             % obj.init() prepares the values to be sent to the implant
             

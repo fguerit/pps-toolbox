@@ -25,19 +25,9 @@ classdef PlayerDummyMonauralBlocking < Player
         is_blocking = 1; % PlayerDummyMonauralBlocking blocks the matlab prompt when playing
     end
     
-    properties (Hidden, Access = protected)
-        h = []; % Handle to the BEDCS sever
-    end
-    
     methods
         function obj = PlayerDummyMonauralBlocking()
             % constructor. Inits the server at startup
-            
-        end
-        
-        function init(obj)
-            % Inits the server
-            
             
         end
         
@@ -72,5 +62,35 @@ classdef PlayerDummyMonauralBlocking < Player
             
         end
     end
+    
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % Loads object from structure
+            if isstruct(s)
+                obj = PlayerDummyMonauralBlocking();
+            else
+                obj = s;
+            end
+        end
+    end
+    
+    methods (Hidden)
+        
+        function s = saveobj(obj)
+            % Saves object to structure
+            % 
+            % This avoids saving the link to the activeX server, as this
+            % would likely crash when reloading the object from a mat-file.
+            
+            % Here there's no user-modifiable properties, so empty
+            % structure
+            s = struct;
+        end
+        
+        function init(obj)
+
+            
+        end        
+    end        
     
 end

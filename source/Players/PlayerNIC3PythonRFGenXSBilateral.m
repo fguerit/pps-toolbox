@@ -225,6 +225,39 @@ classdef PlayerNIC3PythonRFGenXSBilateral < PlayerNIC3
             fclose(fid_stimulus);
         end
     end
+    
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.
+            if isstruct(s)
+                obj = PlayerNIC3PythonRFGenXSBilateral();
+                obj.go_live = s.go_live;
+                obj.show_terminal = s.show_terminal;
+                obj.implant_left = s.implant_left;
+                obj.implant_right = s.implant_right;
+                obj.python_path = s.python_path;
+            else
+                obj = s;
+            end
+        end
+    end    
+    
+    methods (Hidden)
+        
+        function s = saveobj(obj)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.
+            s.go_live = obj.go_live;
+            s.show_terminal = obj.show_terminal;
+            s.implant_left = obj.implant_left;
+            s.implant_right = obj.implant_right;
+            s.python_path = obj.python_path;
+        end
+    end    
+    
     methods (Hidden)
         
         function clean_files(obj)

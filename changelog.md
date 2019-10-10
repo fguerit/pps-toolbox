@@ -5,6 +5,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased](https://github.com/fguerit/pps-toolbox/compare/v0.3.0...dev)
 ### Added
 - Add how to refer to zenodo DOI in the readme
+- Add the possibility to save and load from .mat files
 
 ## [v0.3.0](https://github.com/fguerit/pps-toolbox/compare/eefe173...v0.3.0)
 ### Added

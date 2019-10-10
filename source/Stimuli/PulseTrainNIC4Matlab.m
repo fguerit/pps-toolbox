@@ -1,62 +1,54 @@
-classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
-    % PulseTrainRIB2 < FormatRIB2 & PulseTrain
+classdef PulseTrainNIC4Matlab < FormatNIC4Matlab & PulseTrain
+    % PulseTrainNIC4Matlab < FormatNIC4Matlab & PulseTrain
     %
-    %   Single-electrode pulse train class for MedEl devices, using RIB2 software.
-	%
-	%	Triggering: There is the option to send a TTL trigger before each pulse,
-	%		before first pulse, or to never send a trigger.
+    %   Simple pulse train class for Cochlear devices using NIC4/Matlab interface:
+    %   prestimulus -- stimulus -- prestimulus
     %
-    %   PulseTrainRIB2 Properties:
+    %   PulseTrainNIC4Matlab Properties (PulseTrain class):
     %       phase_dur_us - Phase Duration (microseconds)
     %       electrode_IDs - Electrodes on which the pulse train is played
     %       rate_pps - Rate of the pulse train (pps)
     %       level - Level (Device Units)
-    %       max_level - 1*4 matrix with user-defined maximum level for each range (Device Units)
-    %       range - range of levels
+    %       max_level - User-defined maximum level (Device Units)
     %       duration_s - Pulse train duration (seconds)
-    %       stimulus_file - parameter file used by the MedEl player
-    %       interphase_dur_us - Interphase gap duration (microseconds)
-    %       pulse_type - Biphasic, Triphasic or Precisions triphasic ("B", "T", "P")
-    %       polarity - negative or postive first
-	%		trig_occurence - Before which pulses to put a trigger: 'all' (default), 'first', 'none' 
-	%		trig_dur_us - Trigger duration in microseconds
     %
-    %   PulseTrainRIB2 Methods:
+    %   PulseTrainNIC4Matlab Properties (FormatCochlear class):
+    %       interphase_dur_us - Interphase gap duration (microseconds)
+    %       pre_stim_dur_s - Pre-stimulus duration, makes sure the
+    %       signal is played properly
+    %       pre_stim_rate_pps - Pre-stimulus rate (pps)
+    %       pre_stim_level - Pre-stimulus Level (Device Units)
+    %       pre_stim_phase_dur_us - Pre-stimulus Phase duration (microseconds)
+    %
+    %   PulseTrainNIC4Matlab Methods:
     %       struct(obj) - struct(obj) outputs a structure with the most
     %       relevant properties and their values
     %       get_level_dbua(obj) - level_dbua = obj.get_level_dbua()
     %       outputs the max level played in dB re 1 uA        
     %
     %   Example:
-    %       p = PlayerRIB2();
-    %       stim = PulseTrainRIB2();
+    %       p = PlayerNIC4MatlabL34(); % Laura speech processor
+    %       stim = PulseTrainNIC4Matlab();
     %       p.play(stim)
     %
-    % See also FORMATRIB2, PLAYERRIB2, PULSETRAIN
+    % See also FORMATNIC4Matlab, PLAYERNIC4MATLABL34, PULSETRAIN
     
     properties
         phase_dur_us = 43; % Phase Duration (microseconds)
-        interphase_dur_us = 0; % Interphase gap duration (microseconds)          
         electrode_IDs = 11; % Electrodes on which the pulse train is played
         rate_pps = 442; % Rate of the pulse train (pps)
         level = 100; % Level (Device Units)
-        range = 0; % Range of levels
         duration_s = 0.4; % Pulse train duration (seconds)
-        pulse_type = 'B';
-        polarity = '-'; % negative or postive first   
-		trig_occurence = 'all'; % Before which pulses to put a trigger: 'all' (default), 'first', 'none' 
-        trig_dur_us = 10; % Trigger duration in microseconds
-        max_level = [127 127 127 127]; % Max level for each range (Device Units)
+        max_level = 255; % User-defined maximum level (Device Units)
     end
     
-    properties (SetAccess = protected)     
-        stimulus_file = ''; % parameter file used by the player
-        electrodogram = repmat(struct('t_s', [], 'amp_cu', [],...
-            'pulses_start_times_s', []), 12, 1); % "electrodogram{el_ID}.t_s", ".amp_cu", ".pulse_start_times_s"            
-    end
-    
-    properties (SetAccess = protected, Hidden, GetAccess = public)
-        whole_duration_s = []; % Includes pre- and post-stimulus
+    properties
+        interphase_dur_us = 8; % Interphase gap duration (microseconds)
+        pre_stim_dur_s = 0.075; % Pre-stimulus duration, makes sure the
+        % signal is played properly
+        pre_stim_rate_pps = 5000; % Pre-stimulus rate (pps)
+        pre_stim_level = 20; % Pre-stimulus Level (Device Units)
+        pre_stim_phase_dur_us = 25; % Pre-stimulus Phase duration (microseconds)
     end
     
     properties (Hidden)
@@ -64,11 +56,31 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
         charge_limit_nc = []; % to be defined
     end
     
+    properties (SetAccess = protected, GetAccess = public, Hidden)
+        whole_duration_s = []; % Includes pre- and post-stimulus
+    end
+    
+    properties (SetAccess = protected)
+        electrodogram = repmat(struct('t_s', [], 'amp_cu', [],...
+            'pulses_start_times_s', []), 22, 1); % "electrodogram{el_ID}.t_s", ".amp_cu", ".pulse_start_times_s"            
+    end
+    
+    % Values (or arrays) to be passed on to the L34 speech processor
+    % The user can not access them, to avoid false manipulation
+    properties (SetAccess = protected, Hidden)
+        electrodes = [];
+        modes = 103;
+        current_levels = [];
+        phase_widths = [];
+        phase_gaps = [];
+        periods = [];
+    end
+    
     methods
         % Constructor, called when creating the object
-        function obj = PulseTrainRIB2()
+        function obj = PulseTrainNIC4Matlab()
             
-            % Check levels
+            % Check for max level
             obj.check_level();
             
             % Init everything
@@ -81,7 +93,7 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             % relevant properties and their values
             %
             %   Example:
-            %       stimObj = PulseTrainRIB2;
+            %       stimObj = PulseTrainNIC4Matlab;
             %       s = struct(stimObj)
             %
             %   Or:
@@ -90,10 +102,8 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             
             structOut = struct('rate_pps', obj.rate_pps, ...
                 'level', obj.level, ...
-                'range', obj.range, ...
                 'electrode_IDs', obj.electrode_IDs, ...
                 'phase_dur_us', obj.phase_dur_us ,...
-                'interphase_dur_us', obj.interphase_dur_us ,...
                 'duration_s', obj.duration_s);
         end
         
@@ -104,16 +114,8 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             %   outputs the max level played in dB re 1 uA
             %
             
-            level_dbua = 20*log10(obj.level*(150/127)*2^obj.range);
-        end           
-        
-        function delete(obj)
-            % Delete PulseTrainRIB2 Object
-            
-            if ~isempty(obj.stimulus_file)
-                delete(obj.stimulus_file)
-            end
-        end
+            level_dbua = 20*log10(17.5) + 40*obj.level/255;
+        end 
     end
     
     methods (Static, Hidden)
@@ -122,19 +124,18 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             % properties are saved (saveobj) in a structure and the object is
             % reconstructed when loading it.
             if isstruct(s)
-                newObj = PulseTrainRIB2();
+                newObj = PulseTrainNIC4Matlab;
                 newObj.phase_dur_us = s.phase_dur_us;
                 newObj.interphase_dur_us = s.interphase_dur_us;
                 newObj.electrode_IDs = s.electrode_IDs;
                 newObj.rate_pps = s.rate_pps;
                 newObj.level = s.level;
+                newObj.max_level = s.max_level;                
                 newObj.duration_s = s.duration_s;
-                newObj.range = s.range;
-                newObj.polarity = s.polarity;
-                newObj.pulse_type = s.pulse_type;
-                newObj.max_level = s.max_level;
-                newObj.trig_occurence = s.trig_occurence;     
-                newObj.trig_dur_us = s.trig_dur_us;                        
+                newObj.pre_stim_dur_s = s.pre_stim_dur_s;
+                newObj.pre_stim_rate_pps = s.pre_stim_rate_pps;
+                newObj.pre_stim_level = s.pre_stim_level;
+                newObj.pre_stim_phase_dur_us = s.pre_stim_phase_dur_us;            
                 obj = newObj;
             else
                 obj = s;
@@ -154,105 +155,65 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             s.rate_pps = obj.rate_pps;
             s.level = obj.level;
             s.duration_s = obj.duration_s;
-            s.range = obj.range;            
-            s.polarity = obj.polarity;
-            s.pulse_type = obj.pulse_type;
             s.max_level = obj.max_level;
-            s.trig_occurence = obj.trig_occurence;
-            s.trig_dur_us = obj.trig_dur_us;
+            s.duration_s = obj.duration_s;
+            s.pre_stim_dur_s = obj.pre_stim_dur_s;
+            s.pre_stim_rate_pps = obj.pre_stim_rate_pps;
+            s.pre_stim_level = obj.pre_stim_level;
+            s.pre_stim_phase_dur_us = obj.pre_stim_phase_dur_us;
         end
         
         function init(obj)
-            % obj.init() prepares the file to be written for MedEl
+            % obj.init() prepares the values to be sent to the L34
             
-            % file name is written with round(now*1e8) at the beginning to
-            % make sure one can create two stimuli in a very short time
-            % with different names
-            [current_path, ~, ~] = fileparts(mfilename('fullpath'));
-            if ~exist(obj.stimulus_file, 'file')
-                obj.stimulus_file = [current_path filesep ...
-                    sprintf('%d', round(now*1e12)) '_medel_stimulus_file.stm'];
+            % Check that the stimulus pulse rate is achievable
+            if obj.rate_pps > (1000000/(2*obj.phase_dur_us + obj.interphase_dur_us + 6.4))
+                error('%d pps can not be achieved with a phase and interphase duration of %.1f and %.1f us\n',...
+                    obj.rate_pps, obj.phase_dur_us, obj.interphase_dur_us)
             end
             
-            % Check that the pulse rate is achievable
-            if obj.rate_pps > (1000000/(2*obj.phase_dur_us + obj.interphase_dur_us))
-                error('%d pps can not be achieved with a phase duration of %.1f us\n',...
-                    obj.rate_pps, obj.phase_dur_us)
+            % Check that the pre-stimulus pulse rate is achievable
+            if obj.pre_stim_rate_pps > (1000000/(2*obj.pre_stim_phase_dur_us...
+                    + obj.interphase_dur_us + 6.4))
+                error('%d pps can not be achieved in the prestimulus with a phase and interphase duration of %.1f and %.1f us\n',...
+                    obj.pre_stim_rate_pps, obj.pre_stim_phase_dur_us, obj.interphase_dur_us)
             end
             
-            % Set duration
-            obj.whole_duration_s = obj.duration_s;
+            % Set periods in µs for pre- and poststimulus intervals
+            periods_single(1) = round(1000000/obj.pre_stim_rate_pps);
+            periods_single(2) = round(1000000/obj.rate_pps);
+            periods_single(3) = round(1000000/obj.pre_stim_rate_pps);
             
-            % Set pulses
-            periods(1) = round(1000000/obj.rate_pps);
-            num_pulses(1) = round(obj.duration_s/(periods(1)/1000000));
-            amplitudes(1) = obj.level;
-            electrode = obj.electrode_IDs(1);
+            % Set number of pulses for pre- and poststimulus intervals
+            num_pulses(1) = round(obj.pre_stim_dur_s/(periods_single(1)/1000000));
+            num_pulses(2) = round(obj.duration_s/(periods_single(2)/1000000));
+            num_pulses(3) = round(obj.pre_stim_dur_s/(periods_single(3)/1000000));
             
-            % Alternated polarity is not implemented for this class
-            if strcmp(obj.polarity, 'alt')
-                error('Alternated polarity is not implemented for this class')
-            end
+            % Set amplitudes for pre- and interstimulus intervals
+            amplitudes(1) = obj.pre_stim_level;
+            amplitudes(2) = obj.level;
+            amplitudes(3) = obj.pre_stim_level;
             
-            fid_stimulus = fopen(obj.stimulus_file,'wt');
+            % Set phase widths
+            phase_durations(1) = obj.pre_stim_phase_dur_us;
+            phase_durations(2) = obj.phase_dur_us;
+            phase_durations(3) = obj.pre_stim_phase_dur_us;
             
-            % Header
-            fprintf(fid_stimulus, 'I PULSAR\n');
-            fprintf(fid_stimulus, 'DEF Pulsar Phase %d Gap %d Seq Range ', obj.phase_dur_us, obj.interphase_dur_us);
-            for e=1:12
-                fprintf(fid_stimulus, '%d ', obj.range);
-            end
-            fprintf(fid_stimulus, '\n\n');
+            % Set periodes for the pulse train
+            obj.electrodes = obj.electrode_IDs;
+            obj.current_levels = [repmat(amplitudes(1),1,num_pulses(1))...
+                repmat(amplitudes(2),1,num_pulses(2))...
+                repmat(amplitudes(3),1,num_pulses(3))];
+            obj.phase_widths = [repmat(phase_durations(1),1,num_pulses(1))...
+                repmat(phase_durations(2),1,num_pulses(2))...
+                repmat(phase_durations(3),1,num_pulses(3))];
+            obj.phase_gaps = obj.interphase_dur_us;
+            obj.periods = [repmat(periods_single(1),1,num_pulses(1)) ...
+                repmat(periods_single(2),1,num_pulses(2)) ...
+                repmat(periods_single(3),1,num_pulses(3))];
             
-            switch obj.trig_occurence
-                case 'first'
-                    
-                    % Trigger with the first pulse
-                    fprintf(fid_stimulus, '%s ', obj.pulse_type);
-                    fprintf(fid_stimulus, 'Trig TLength %.2f ', obj.trig_dur_us);
-                    fprintf(fid_stimulus, 'Distance %d  ',  periods(1));
-                    fprintf(fid_stimulus, '%s  ', obj.polarity);
-                    fprintf(fid_stimulus, 'Number 1  ');
-                    fprintf(fid_stimulus, 'Channel %d  ', electrode);
-                    fprintf(fid_stimulus, 'Amplitude %d  \n\n', amplitudes(1));
-                    
-                    % Pulse train
-                    fprintf(fid_stimulus, 'REP %d\n\n  ', num_pulses(1) - 1); % one, less, because of the first trigger
-                    fprintf(fid_stimulus, '%s ', obj.pulse_type);
-                    fprintf(fid_stimulus, 'Distance %d  ',  periods(1));
-                    fprintf(fid_stimulus, '%s  ', obj.polarity);
-                    fprintf(fid_stimulus, 'Number 1  ');
-                    fprintf(fid_stimulus, 'Channel %d  ', electrode);
-                    fprintf(fid_stimulus, 'Amplitude %d  \n\n', amplitudes(1));
-                    fprintf(fid_stimulus, 'END\n');
-                    
-                case 'none'
-                    
-                    % Pulse train
-                    fprintf(fid_stimulus, 'REP %d\n\n  ', num_pulses(1));
-                    fprintf(fid_stimulus, '%s ', obj.pulse_type);
-                    fprintf(fid_stimulus, 'Distance %d  ',  periods(1));
-                    fprintf(fid_stimulus, '%s  ', obj.polarity);
-                    fprintf(fid_stimulus, 'Number 1  ');
-                    fprintf(fid_stimulus, 'Channel %d  ', electrode);
-                    fprintf(fid_stimulus, 'Amplitude %d  \n\n', amplitudes(1));
-                    fprintf(fid_stimulus, 'END\n');
-                    
-                case 'all'
-                    
-                    % Pulse train
-                    fprintf(fid_stimulus, 'REP %d\n\n  ', num_pulses(1));
-                    fprintf(fid_stimulus, '%s ', obj.pulse_type);
-                    fprintf(fid_stimulus, 'Trig TLength %.2f ', obj.trig_dur_us);
-                    fprintf(fid_stimulus, 'Distance %d  ',  periods(1));
-                    fprintf(fid_stimulus, '%s  ', obj.polarity);
-                    fprintf(fid_stimulus, 'Number 1  ');
-                    fprintf(fid_stimulus, 'Channel %d  ', electrode);
-                    fprintf(fid_stimulus, 'Amplitude %d  \n\n', amplitudes(1));
-                    fprintf(fid_stimulus, 'END\n');                    
-            end
-            
-            fclose(fid_stimulus);
+            % Set whole duration
+            obj.whole_duration_s = obj.duration_s + 2*obj.pre_stim_dur_s;
         end
         
         function plot(obj)
@@ -260,7 +221,8 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
         
         error('Plotting not implemented yet for this stimulus')
         
-        end        
+        end
+        
     end
     
     methods (Access = protected)
@@ -268,9 +230,9 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             % CHECK_LEVEL(OBJ) returns an error if level is superior than
             % user-defined max level
             
-            if obj.level > obj.max_level(obj.range+1)
-                error('level (%d CU) > user-defined maximum level (%d CU for range %d)', ...
-                    obj.level, obj.max_level(obj.range+1), obj.range)
+            if obj.level > obj.max_level
+                error('level (%d CU) > user-defined maximum level (%d CU)',...
+                    obj.level, obj.max_level)
             end
         end
     end    
@@ -278,12 +240,11 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
     % obj.set methods. Each time a property is updated, initialization
     % should be redone
     methods
-        
         function set.phase_dur_us(obj,value)
             
             % Settings
             property_class = {'numeric'};
-            property_attributes = {'scalar', '>=', 0, '<', 9999};
+            property_attributes = {'scalar', '>=', 20, '<', 429.4};
             prop_name = 'phase_dur_us';
             
             % Try initialization
@@ -300,32 +261,11 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             end
         end
         
-        function set.interphase_dur_us(obj,value)
-            
-            % Settings
-            property_class = {'numeric'};
-            property_attributes = {'scalar', '>=', 0, '<', 9999};
-            prop_name = 'interphase_dur_us';
-            
-            % Try initialization
-            validateattributes(value, property_class, property_attributes)            
-            tmp_value = obj.(prop_name);
-            try
-                obj.(prop_name) = value;
-                obj.init;
-            catch error_msg
-                obj.(prop_name) = tmp_value;
-                obj.init;
-                warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
-                rethrow(error_msg)
-            end
-        end        
-        
         function set.electrode_IDs(obj,value)
             
             % Settings
             property_class = {'numeric'};
-            property_attributes = {'scalar', 'integer', '>=', 1, '<=', 12};
+            property_attributes = {'scalar', 'integer', '>=', 1, '<=', 22};
             prop_name = 'electrode_IDs';
             
             % Try initialization
@@ -367,7 +307,7 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             
             % Settings
             property_class = {'numeric'};
-            property_attributes = {'scalar', 'integer', '>=', 0, '<=', 127};
+            property_attributes = {'scalar', 'integer', '>=', 0, '<=', 255};
             prop_name = 'level';
             
             % Try initialization
@@ -375,7 +315,7 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             tmp_value = obj.(prop_name);
             try
                 obj.(prop_name) = value;
-                obj.check_level();                
+                obj.check_level;
                 obj.init;
             catch error_msg
                 obj.(prop_name) = tmp_value;
@@ -385,12 +325,11 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             end
         end
         
-        
         function set.max_level(obj,value)
             
             % Settings
             property_class = {'numeric'};
-            property_attributes = {'row', 'nonempty', 'numel', 4, 'integer', '>=', 0, '<=', 127};
+            property_attributes = {'scalar', 'integer', '>=', 0, '<=', 255};
             prop_name = 'max_level';
             
             % Try initialization
@@ -398,7 +337,7 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             tmp_value = obj.(prop_name);
             try
                 obj.(prop_name) = value;
-                obj.check_level();
+                obj.check_level;
                 obj.init;
             catch error_msg
                 obj.(prop_name) = tmp_value;
@@ -406,7 +345,7 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
                 warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
                 rethrow(error_msg)
             end
-        end  
+        end        
         
         function set.duration_s(obj,value)
             
@@ -429,12 +368,12 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
             end
         end
         
-        function set.trig_dur_us(obj,value)
+        function set.interphase_dur_us(obj,value)
             
             % Settings
             property_class = {'numeric'};
-            property_attributes = {'scalar', '>=', 0, '<', 55e6};
-            prop_name = 'trig_dur_us';
+            property_attributes = {'scalar', '>=', 5.6, '<', 56.6};
+            prop_name = 'interphase_dur_us';
             
             % Try initialization
             validateattributes(value, property_class, property_attributes)            
@@ -448,67 +387,20 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
                 warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
                 rethrow(error_msg)
             end
-        end        
+        end
         
-        function set.polarity(obj,value)
-            
-            % Settings
-            property_class = {'char'};
-            property_attributes = {'nonempty'};
-            string_attributes = {'-', '+', 'alt'};
-            prop_name = 'polarity';
-            
-            % Try initialization
-            validateattributes(value, property_class, property_attributes);            
-            value = validatestring(value, string_attributes);
-            tmp_value = obj.(prop_name);
-            try
-                obj.(prop_name) = value;
-                obj.init;
-            catch error_msg
-                obj.(prop_name) = tmp_value;
-                obj.init;
-                warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
-                rethrow(error_msg)
-            end  
-        end        
-        
-        function set.pulse_type(obj,value)
-            
-            % Settings
-            property_class = {'char'};
-            property_attributes = {'nonempty'};
-            string_attributes = {'B', 'T', 'P'};
-            prop_name = 'pulse_type';
-            
-            % Try initialization
-            validateattributes(value, property_class, property_attributes);            
-            value = validatestring(value, string_attributes);
-            tmp_value = obj.(prop_name);
-            try
-                obj.(prop_name) = value;
-                obj.init;
-            catch error_msg
-                obj.(prop_name) = tmp_value;
-                obj.init;
-                warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
-                rethrow(error_msg)
-            end  
-        end          
-        
-        function set.range(obj,value)
+        function set.pre_stim_dur_s(obj,value)
             
             % Settings
             property_class = {'numeric'};
-            property_attributes = {'scalar', 'integer', '>=', 0, '<=', 3};
-            prop_name = 'range';
+            property_attributes = {'scalar', '>', 0};
+            prop_name = 'pre_stim_dur_s';
             
             % Try initialization
             validateattributes(value, property_class, property_attributes)            
             tmp_value = obj.(prop_name);
             try
                 obj.(prop_name) = value;
-                obj.check_level();
                 obj.init;
             catch error_msg
                 obj.(prop_name) = tmp_value;
@@ -516,19 +408,17 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
                 warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
                 rethrow(error_msg)
             end
-        end  
-
-		function set.trig_occurence(obj,value)
+        end
+        
+        function set.pre_stim_rate_pps(obj,value)
             
             % Settings
-            property_class = {'char'};
-            property_attributes = {'nonempty'};
-            string_attributes = {'all', 'first', 'none'};
-            prop_name = 'trig_occurence';
+            property_class = {'numeric'};
+            property_attributes = {'scalar', '>', 0};
+            prop_name = 'pre_stim_rate_pps';
             
             % Try initialization
-            validateattributes(value, property_class, property_attributes);            
-            value = validatestring(value, string_attributes);
+            validateattributes(value, property_class, property_attributes)            
             tmp_value = obj.(prop_name);
             try
                 obj.(prop_name) = value;
@@ -538,8 +428,49 @@ classdef PulseTrainRIB2 < FormatRIB2 & PulseTrain
                 obj.init;
                 warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
                 rethrow(error_msg)
-            end             
-        end 
+            end
+        end
+        
+        function set.pre_stim_level(obj,value)
+            
+            % Settings
+            property_class = {'numeric'};
+            property_attributes = {'scalar', 'integer', '>=', 0, '<=', 255};
+            prop_name = 'pre_stim_level';
+            
+            % Try initialization
+            validateattributes(value, property_class, property_attributes)            
+            tmp_value = obj.(prop_name);
+            try
+                obj.(prop_name) = value;
+                obj.init;
+            catch error_msg
+                obj.(prop_name) = tmp_value;
+                obj.init;
+                warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
+                rethrow(error_msg)
+            end
+        end
+        
+        function set.pre_stim_phase_dur_us(obj,value)
+            
+            % Settings
+            property_class = {'numeric'};
+            property_attributes = {'scalar', '>=', 20, '<', 429.4};
+            prop_name = 'pre_stim_phase_dur_us';
+            
+            % Try initialization
+            validateattributes(value, property_class, property_attributes)            
+            tmp_value = obj.(prop_name);
+            try
+                obj.(prop_name) = value;
+                obj.init;
+            catch error_msg
+                obj.(prop_name) = tmp_value;
+                obj.init;
+                warning('%s could not be changed, and was kept to its previous value.\n\nCf. error message below for more info.', prop_name)
+                rethrow(error_msg)
+            end
+        end
     end
-    
 end

@@ -40,15 +40,6 @@ classdef PlayerBEDCS118 < Player
             obj.init();
         end
         
-        function init(obj)
-            % Inits the server
-            
-            obj.h = actxserver(obj.server_name);
-            obj.h.Online = obj.online;
-            obj.h.Visible = obj.visible;
-            
-        end
-        
         function play(obj, stimObj)
             % PLAY plays the stimulus
             %
@@ -87,6 +78,40 @@ classdef PlayerBEDCS118 < Player
             end
             
         end
+    end
+    
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % Loads object from structure
+            if isstruct(s)
+                obj = PlayerBEDCS118();
+            else
+                obj = s;
+            end
+        end
+    end
+    
+    methods (Hidden)
+        
+        function s = saveobj(obj)
+            % Saves object to structure
+            % 
+            % This avoids saving the link to the activeX server, as this
+            % would likely crash when reloading the object from a mat-file.
+            
+            % Here there's no user-modifiable properties, so empty
+            % structure
+            s = struct;
+        end
+        
+        function init(obj)
+            % Inits the server
+            
+            obj.h = actxserver(obj.server_name);
+            obj.h.Online = obj.online;
+            obj.h.Visible = obj.visible;
+            
+        end        
     end
     
 end

@@ -10,7 +10,10 @@ classdef (Abstract) Format < handle
     %   FORMAT Methods:
     %       struct(obj) - struct(obj) outputs a structure with the most
     %       relevant properties and their values
-    %       plot - Plots the stimulus      
+    %       plot - Plots the stimulus  
+    %       loadobj - Loads object from structure with only properties
+    %       begin saved
+    %       saveobj - Saves only modifiable properties in a structure
     %
     %   See also PLAYER, STIMULUS, FormatElectric
 
@@ -27,6 +30,11 @@ classdef (Abstract) Format < handle
     methods (Abstract, Hidden)
         init(obj) % Initializes the stimulus (to be called at start or when 
         % updating a property
+        saveobj(obj) % Save object to structure        
+    end
+    
+    methods (Abstract, Hidden, Static)
+        loadobj(s) % Load object from structure
     end
     
     methods (Abstract, Access = protected)

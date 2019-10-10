@@ -115,10 +115,54 @@ classdef PulseTrainNIC3Matlab < FormatNIC3Matlab & PulseTrain
             %
             
             level_dbua = 20*log10(17.5) + 40*obj.level/255;
-        end            
+        end 
     end
     
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.
+            if isstruct(s)
+                newObj = PulseTrainNIC3Matlab;
+                newObj.phase_dur_us = s.phase_dur_us;
+                newObj.interphase_dur_us = s.interphase_dur_us;
+                newObj.electrode_IDs = s.electrode_IDs;
+                newObj.rate_pps = s.rate_pps;
+                newObj.level = s.level;
+                newObj.max_level = s.max_level;                
+                newObj.duration_s = s.duration_s;
+                newObj.pre_stim_dur_s = s.pre_stim_dur_s;
+                newObj.pre_stim_rate_pps = s.pre_stim_rate_pps;
+                newObj.pre_stim_level = s.pre_stim_level;
+                newObj.pre_stim_phase_dur_us = s.pre_stim_phase_dur_us;            
+                obj = newObj;
+            else
+                obj = s;
+            end
+        end
+    end    
+    
     methods (Hidden)
+        
+        function s = saveobj(obj)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.            
+            s.phase_dur_us = obj.phase_dur_us;
+            s.interphase_dur_us = obj.interphase_dur_us;
+            s.electrode_IDs = obj.electrode_IDs;
+            s.rate_pps = obj.rate_pps;
+            s.level = obj.level;
+            s.duration_s = obj.duration_s;
+            s.max_level = obj.max_level;
+            s.duration_s = obj.duration_s;
+            s.pre_stim_dur_s = obj.pre_stim_dur_s;
+            s.pre_stim_rate_pps = obj.pre_stim_rate_pps;
+            s.pre_stim_level = obj.pre_stim_level;
+            s.pre_stim_phase_dur_us = obj.pre_stim_phase_dur_us;
+        end
+        
         function init(obj)
             % obj.init() prepares the values to be sent to the L34
             

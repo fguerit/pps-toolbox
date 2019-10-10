@@ -53,7 +53,54 @@ classdef PulseTrainRIB2ABR < PulseTrainRIB2
         
     end
     
-    methods (Hidden)        
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.
+            if isstruct(s)
+                newObj = PulseTrainRIB2ABR();
+                newObj.phase_dur_us = s.phase_dur_us;
+                newObj.interphase_dur_us = s.interphase_dur_us;
+                newObj.electrode_IDs = s.electrode_IDs;
+                newObj.rate_pps = s.rate_pps;
+                newObj.level = s.level;
+                newObj.duration_s = s.duration_s;
+                newObj.range = s.range;
+                newObj.polarity = s.polarity;
+                newObj.pulse_type = s.pulse_type;
+                newObj.max_level = s.max_level;
+                newObj.trig_occurence = s.trig_occurence;     
+                newObj.trig_dur_us = s.trig_dur_us;      
+                newObj.jitter_window_us = s.jitter_window_us;      
+                obj = newObj;
+            else
+                obj = s;
+            end
+        end
+    end    
+    
+    methods (Hidden)
+        
+        function s = saveobj(obj)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.            
+            s.phase_dur_us = obj.phase_dur_us;
+            s.interphase_dur_us = obj.interphase_dur_us;
+            s.electrode_IDs = obj.electrode_IDs;
+            s.rate_pps = obj.rate_pps;
+            s.level = obj.level;
+            s.duration_s = obj.duration_s;
+            s.range = obj.range;            
+            s.polarity = obj.polarity;
+            s.pulse_type = obj.pulse_type;
+            s.max_level = obj.max_level;
+            s.trig_occurence = obj.trig_occurence;
+            s.trig_dur_us = obj.trig_dur_us;
+            s.jitter_window_us = obj.jitter_window_us;
+        end
+        
         function init(obj)
             % obj.init() prepares the file to be written for MedEl
             

@@ -25,6 +25,11 @@ classdef (Abstract) Player < handle
     methods (Abstract, Hidden)
         init(obj) % Initializes the player (to be called at start or when 
         % updating a property
+        saveobj(obj) % Save object to structure           
     end        
+    
+    methods (Abstract, Hidden, Static)
+        loadobj(s) % Load object from structure
+    end    
     
 end

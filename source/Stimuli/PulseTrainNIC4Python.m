@@ -1,9 +1,9 @@
-classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
-    % PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
+classdef PulseTrainNIC4Python < FormatNIC4Python & PulseTrain
+    % PulseTrainNIC4Python < FormatNIC4Python & PulseTrain
     %
-    %   Pulse train class for Cochlear devices using NIC3/Python interface:
+    %   Pulse train class for Cochlear devices using NIC4/Python interface:
     %
-    %   PulseTrainNIC3Python Properties (PulseTrain class):
+    %   PulseTrainNIC4Python Properties (PulseTrain class):
     %       phase_dur_us - Phase Duration (microseconds)
     %       electrode_IDs - Electrodes on which the pulse train is played
     %       rate_pps - Rate of the pulse train (pps)
@@ -11,13 +11,13 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
     %       max_level - User-defined maximum level (Device Units)    
     %       duration_s - Pulse train duration (seconds)
     %
-    %   PulseTrainNIC3Python Properties (FormatCochlear class):
+    %   PulseTrainNIC4Python Properties (FormatCochlear class):
     %       modulator - [t_s, amp] vector that modulates the pulse train    
     %       interphase_dur_us - Interphase gap duration (microseconds)
     %       polarity - first phase polarity
     %       pulse_type - Biphasic or Quadraphasic ("B", "Q")
     %
-    %   PulseTrainNIC3Python Methods:
+    %   PulseTrainNIC4Python Methods:
     %       struct(obj) - struct(obj) outputs a structure with the most
     %       relevant properties and their values
     %       get_level_dbua(obj) - level_dbua = obj.get_level_dbua()
@@ -27,7 +27,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
     %   Example:
     %       p = PlayerPythonRFGenXS(); 
     %       powerUp = PowerUpPyCochlear();
-    %       stim = PulseTrainNIC3Python();
+    %       stim = PulseTrainNIC4Python();
     %       p.play({powerUp, stim, powerUp})
     %
     %   Modulation and plotting:
@@ -38,7 +38,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
     %       plot(stim)
     %
     %
-    % See also FORMATNIC3PYTHON, PLAYERNIC3PYTHONRFGENXS, PULSETRAIN
+    % See also FORMATNIC4PYTHON, PLAYERNIC4PYTHONRFGENXS, PULSETRAIN
     
     properties
         phase_dur_us = 43; % Phase Duration (microseconds)
@@ -73,7 +73,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
     
     methods
         % Constructor, called when creating the object
-        function obj = PulseTrainNIC3Python()
+        function obj = PulseTrainNIC4Python()
             
             % Check for max level
             obj.check_level();
@@ -88,7 +88,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
             % relevant properties and their values
             %
             %   Example:
-            %       stimObj = PulseTrainNIC3Python;
+            %       stimObj = PulseTrainNIC4Python;
             %       s = struct(stimObj)
             %
             %   Or:
@@ -116,7 +116,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
         end
         
         function delete(obj)
-            % Delete PulseTrainNIC3Python Object
+            % Delete PulseTrainNIC4Python Object
             
             if ~isempty(obj.stimulus_file)
                 delete([obj.stimulus_file '*'])
@@ -130,7 +130,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
             % properties are saved (saveobj) in a structure and the object is
             % reconstructed when loading it.
             if isstruct(s)
-                newObj = PulseTrainNIC3Python();
+                newObj = PulseTrainNIC4Python();
                 newObj.phase_dur_us = s.phase_dur_us;
                 newObj.interphase_dur_us = s.interphase_dur_us;
                 newObj.electrode_IDs = s.electrode_IDs;
@@ -203,7 +203,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
             fid_stimulus = fopen(obj.stimulus_file,'wt');
                         
             % Header
-            fprintf(fid_stimulus, 'import cochlear.nic3 as nic3\n\n');
+            fprintf(fid_stimulus, 'from cochlear.nic import nic4\n\n');
             fprintf(fid_stimulus, 'def get_stimulus_seq():\n');
             
             
@@ -284,27 +284,27 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
                     switch obj.polarity
                         case '-'
                             fprintf(fid_stimulus, ...
-                                '    stim_type_first_pulse_%d = nic3.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
+                                '    stim_type_first_pulse_%d = nic4.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
                                 idx_levels, obj.electrode_IDs, -3, ...
                                 round(obj.level*level_modulator(idx_levels)),...
                                 obj.phase_dur_us, obj.interphase_dur_us, ...
                                 period_first_pulse_us);
                             
                             fprintf(fid_stimulus, ...
-                                '    stim_type_second_pulse_%d = nic3.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
+                                '    stim_type_second_pulse_%d = nic4.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
                                 idx_levels, -3, obj.electrode_IDs, ...
                                 round(obj.level*level_modulator(idx_levels)),...
                                 obj.phase_dur_us, obj.interphase_dur_us, period_second_pulse_us);
                             
                         case '+'
                             fprintf(fid_stimulus, ...
-                                '    stim_type_first_pulse_%d = nic3.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
+                                '    stim_type_first_pulse_%d = nic4.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
                                 idx_levels, -3, obj.electrode_IDs, ...
                                 round(obj.level*level_modulator(idx_levels)),...
                                 obj.phase_dur_us, obj.interphase_dur_us, period_first_pulse_us);
                             
                             fprintf(fid_stimulus, ...
-                                '    stim_type_second_pulse_%d = nic3.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
+                                '    stim_type_second_pulse_%d = nic4.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
                                 idx_levels, obj.electrode_IDs, -3, ...
                                 round(obj.level*level_modulator(idx_levels)),...
                                 obj.phase_dur_us, obj.interphase_dur_us, ...
@@ -313,15 +313,15 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
                     
                     
                     fprintf(fid_stimulus, ...
-                        '    stim_command_first_pulse_%d = nic3.StimulusCommand(stim_type_first_pulse_%d)\n', ...
+                        '    stim_command_first_pulse_%d = nic4.StimulusCommand(stim_type_first_pulse_%d)\n', ...
                         idx_levels, idx_levels);
                     fprintf(fid_stimulus, ...
-                        '    stim_command_second_pulse_%d = nic3.StimulusCommand(stim_type_second_pulse_%d)\n', ...
+                        '    stim_command_second_pulse_%d = nic4.StimulusCommand(stim_type_second_pulse_%d)\n', ...
                         idx_levels, idx_levels);
                     
                 end
                 fprintf(fid_stimulus, ...
-                    '    seq = nic3.Sequence()\n');                
+                    '    seq = nic4.Sequence()\n');                
                 
                 for idx = 1:num_pulses
                     if mod_bool
@@ -344,7 +344,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
                     switch obj.polarity
                         case '-'
                             fprintf(fid_stimulus, ...
-                                '    stim_type_%d = nic3.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
+                                '    stim_type_%d = nic4.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
                                 idx_levels, obj.electrode_IDs, -3, ...
                                 round(obj.level*level_modulator(idx_levels)),...
                                 obj.phase_dur_us, obj.interphase_dur_us, ...
@@ -352,7 +352,7 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
                             
                         case '+'
                             fprintf(fid_stimulus, ...
-                                '    stim_type_%d = nic3.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
+                                '    stim_type_%d = nic4.BiphasicStimulus(%d, %d, %d, %.1f, %.1f, %.1f)\n', ...
                                 idx_levels, -3, obj.electrode_IDs, ...
                                 round(obj.level*level_modulator(idx_levels)),...
                                 obj.phase_dur_us, obj.interphase_dur_us, ...
@@ -360,19 +360,19 @@ classdef PulseTrainNIC3Python < FormatNIC3Python & PulseTrain
                     end
                     
                     fprintf(fid_stimulus, ...
-                        '    stim_command_%d = nic3.StimulusCommand(stim_type_%d)\n', ...
+                        '    stim_command_%d = nic4.StimulusCommand(stim_type_%d)\n', ...
                         idx_levels, idx_levels);
                 end
                 if mod_bool
                     fprintf(fid_stimulus, ...
-                        '    seq = nic3.Sequence()\n');
+                        '    seq = nic4.Sequence()\n');
                     for idx = 1:num_pulses
                         fprintf(fid_stimulus, ...
                             '    seq.append(stim_command_%d)\n', idx);
                     end
                 else
                     fprintf(fid_stimulus, ...
-                        '    seq = nic3.Sequence(%d)\n', num_pulses);
+                        '    seq = nic4.Sequence(%d)\n', num_pulses);
                     fprintf(fid_stimulus, ...
                         '    seq.append(stim_command_1)\n');
                 end

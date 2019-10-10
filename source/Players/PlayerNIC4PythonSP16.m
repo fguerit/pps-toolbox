@@ -1,45 +1,45 @@
-classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
-    % PlayerNIC3PythonRFGenXS < PlayerNIC3
+classdef PlayerNIC4PythonSP16 < PlayerNIC4
+    % PlayerNIC4PythonSP16 < PlayerNIC4
     %   
-    %   Class that defines the PlayerNIC3PythonRFGenXS object.
+    %   Class that defines the PlayerNIC4PythonSP16 object.
     %
     %   It writes .py scripts and runs Python 2.7 in the background.
     %
-    %   PlayerNIC3PythonRFGenXS Properties (can be modified):    
+    %   PlayerNIC4PythonSP16 Properties (can be modified):    
     %       go_live - 1 by default, virtual stimulation by using 0
     %       python_distribution - "python.exe" by default
     %       show_terminal - option to show terminal for debugging (0 by
     %       default)
     %       implant - "CIC4" or "CIC3"
     %
-    %   PlayerNIC3PythonRFGenXS Properties (can not be modified):
+    %   PlayerNIC4PythonSP16 Properties (can not be modified):
     %       stimulus_format - Format that can be read by the player
-    %       is_blocking - 0 here: PlayerNIC3PythonRFGenXS doesn't block the matlab prompt when playing      
-    %       nic3javapath - nic3 settings
-    %       platform - nic3 settings
-    %       auto_pufs - nic3 settings
-    %       mode - nic3 settings
-    %       flagged_electrodes - nic3 settings
-    %       min_pulse_width_us - nic3 settings
-    %       latency_ms - nic3 settings
+    %       is_blocking - 0 here: PlayerNIC4PythonSP16 doesn't block the matlab prompt when playing      
+    %       nic4javapath - nic4 settings
+    %       platform - nic4 settings
+    %       auto_pufs - nic4 settings
+    %       mode - nic4 settings
+    %       flagged_electrodes - nic4 settings
+    %       min_pulse_width_us - nic4 settings
+    %       latency_ms - nic4 settings
     %
-    %   PlayerNIC3PythonRFGenXS Methods:
+    %   PlayerNIC4PythonSP16 Methods:
     %       play(obj, stimObj) - obj.play(stimObj) plays the stimulus
     %       play(obj, {stimObj_1, .., stimObj_n}) - plays a list of stimuli
     %       one after each other
     %
     %   Example for one stimulus:
-    %       p = PlayerNIC3PythonRFGenXS(); 
-    %       stim = PulseTrainNIC3Python();
+    %       p = PlayerNIC4PythonSP16(); 
+    %       stim = PulseTrainNIC4Python();
     %       p.play(stim)    
     %
     %   Example for multiple stimului:
-    %       p = PlayerNIC3PythonRFGenXS(); 
-    %       stim1 = PulseTrainNIC3Python();
-    %       stim2 = PulseTrainNIC3Python();
+    %       p = PlayerNIC4PythonSP16(); 
+    %       stim1 = PulseTrainNIC4Python();
+    %       stim2 = PulseTrainNIC4Python();
     %       p.play({stim1, stim2})        
     %
-    %   See also PLAYERNIC3, FORMAT, BLEEP, PULSETRAINNIC3PYTHON
+    %   See also PLAYERNIC4, FORMAT, BLEEP, PULSETRAINNIC4PYTHON
        
     properties
         go_live = 1; % 1 by default, virtual stimulation by using 0
@@ -51,15 +51,18 @@ classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
     
     % These properties can't be modified by the user, to avoid false manipulation
     properties (SetAccess = protected)
-        stimulus_format = @FormatNIC3Python;
-        is_blocking = 0; % PlayerNIC3PythonRFGenXS doesn't block the matlab prompt when playing 
-        nic3javapath = ''; % Not necessary for python
-        platform = 'RFGenXS';
-        auto_pufs = 'off';
+        stimulus_format = @FormatNIC4Python;
+        is_blocking = 0; % PlayerNIC4PythonSP16 doesn't block the matlab prompt when playing 
+        nic4javapath = ''; % Not necessary for python
+        platform = 'SP16';
+        auto_pufs = 'on';
         mode = 'MP1+2';
         flagged_electrodes = '';
-        min_pulse_width_us = '20.0';
+        min_pulse_width_us = '25.0';
         latency_ms = '100';
+        c_levels = ['255 255 255 255 255 255 255 255 255 255 255 255 255 '...
+            '255 255 255 255 255 255 255 255 255'];
+        c_levels_pulse_width_us = '40.0';
     end    
     
     % Different handles and hidden properties
@@ -71,7 +74,7 @@ classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
     end
     
     methods
-        function obj = PlayerNIC3PythonRFGenXS()
+        function obj = PlayerNIC4PythonSP16()
             % Constructor, inits the client at startup
             
             obj.init();
@@ -104,10 +107,10 @@ classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
             
             % Print header
             fprintf(fid_stimulus, 'import imp\n');
-            fprintf(fid_stimulus, 'import cochlear.nic3 as nic3\n\n');
+            fprintf(fid_stimulus, 'from cochlear.nic import nic4\n\n');
 
             % Print sequences
-            fprintf(fid_stimulus, 'seq_main = nic3.Sequence()\n\n');
+            fprintf(fid_stimulus, 'seq_main = nic4.Sequence()\n\n');
             for idx = 1:n_stimuli
                 fprintf(fid_stimulus, 'seq_%d = imp.load_source("seq_%d", "%s")\n', ...
                     idx, idx, strrep(stimObj{idx}.stimulus_file, '\', '\\')); 
@@ -117,7 +120,7 @@ classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
             % Load properties and start streamer
             fprintf(fid_stimulus, 'props = imp.load_source("props", "%s")\n', ...
                 strrep(obj.python_file_properties, '\', '\\')); 
-            fprintf(fid_stimulus, 'streamer = nic3.Streamer(props.p)\n');
+            fprintf(fid_stimulus, 'streamer = nic4.Streamer(props.p)\n');
             fprintf(fid_stimulus, 'streamer.start()\n');
             fprintf(fid_stimulus, 'streamer.sendData(seq_main)\n');
             fprintf(fid_stimulus, 'streamer.waitUntilFinished()\n');
@@ -170,11 +173,11 @@ classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
             fid_stimulus = fopen(obj.python_file_properties,'wt');
             
             % Header
-            fprintf(fid_stimulus, 'import cochlear.nic3 as nic3\n\n');
+            fprintf(fid_stimulus, 'from cochlear.nic import nic4\n\n');
             fprintf(fid_stimulus, 'def get_properties():\n');   
             
             % Create python properties object
-            fprintf(fid_stimulus, '    p = nic3.Properties()\n'); 
+            fprintf(fid_stimulus, '    p = nic4.Properties()\n'); 
             fprintf(fid_stimulus, '    p.add("platform", "%s")\n', obj.platform); 
             fprintf(fid_stimulus, '    p.add("implant", "%s")\n', obj.implant); 
             fprintf(fid_stimulus, '    p.add("mode", "%s")\n', obj.mode); 
@@ -182,6 +185,8 @@ classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
             fprintf(fid_stimulus, '    p.add("min_pulse_width_us", "%s")\n', obj.min_pulse_width_us); 
             fprintf(fid_stimulus, '    p.add("auto_pufs", "off")\n'); 
             fprintf(fid_stimulus, '    p.add("latency_ms", "%s")\n', obj.latency_ms); 
+            fprintf(fid_stimulus, '    p.add("c_levels_pulse_width_us", "%s")\n', obj.c_levels_pulse_width_us); 
+            fprintf(fid_stimulus, '    p.add("c_levels", "%s")\n', obj.c_levels);             
             if obj.go_live
                 fprintf(fid_stimulus, '    p.add("go_live", "on")\n'); 
             else
@@ -233,7 +238,7 @@ classdef PlayerNIC3PythonRFGenXS < PlayerNIC3
             % properties are saved (saveobj) in a structure and the object is
             % reconstructed when loading it.
             if isstruct(s)
-                obj = PlayerNIC3PythonRFGenXS();
+                obj = PlayerNIC4PythonSP16();
                 obj.go_live = s.go_live;
                 obj.show_terminal = s.show_terminal;
                 obj.implant = s.implant;

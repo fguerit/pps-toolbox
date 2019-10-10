@@ -76,4 +76,29 @@ classdef PlayerRIB2 < Player
             unloadlibrary('RIB2');
         end
     end
+    
+    methods (Static, Hidden)
+        function obj = loadobj(s)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.
+            if isstruct(s)
+                obj = PlayerRIB2();
+            else
+                obj = s;
+            end
+        end
+    end    
+    
+    methods (Hidden)
+        
+        function s = saveobj(obj)
+            % To avoid glitches when saving to .mat file, only modifiable
+            % properties are saved (saveobj) in a structure and the object is
+            % reconstructed when loading it.
+            %
+            % for now, empty struct.
+            s = struct();
+        end
+    end        
 end
